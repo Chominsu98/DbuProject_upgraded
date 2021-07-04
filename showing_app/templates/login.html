@@ -1,0 +1,54 @@
+{% extends 'base.html' %}
+{% load static %}
+
+
+{% block contents %}
+
+<body class="is-preload">
+    <div id='wrapper'>
+        <!-- Header -->
+					<header id="header">
+						<div class="">
+							<img style="width:20%;" src="{% static 'images/DBU.png' %}" alt="" />
+						</div>
+						<div class="content">
+							<div class="inner">
+								<h1>리더들은 코드를 입력해주세요</h1>
+								<p>멤버들의 출석체크를 위한 프로그램입니다.</p>
+                                <form method="post" action="">
+                                    <div class="fields">
+                                        <div class="field">
+                                            <label for="message">👀PASSCODE👀</label>
+                                            <input type="text" name="passcode" />
+                                        </div>
+                                    </div>
+                                    <ul class="actions">
+                                        <li><input id="send" type="submit" value="Send it" class="primary" /></li>
+                                        <li><input type="reset" value="Reset" /></li>
+                                    </ul>
+                                </form>
+							</div>
+                            
+						</div>
+						
+							<ul class="icons">
+                                <li><a href="https://www.instagram.com/done_by_us/" class="icon brands fa-instagram"><span class="label">Instagram</span></a></li>
+                                <li><a href="#" class="icon brands fa-github"><span class="label">GitHub</span></a></li>
+                            </ul>
+						
+					</header>
+
+        </div>
+
+    </div>
+    <footer>
+        <p class="copyright">&copy; Developed by ChoMinsu.</p>
+    </footer>
+    <div id="bg"></div>
+
+    
+
+
+
+</body>
+{% endblock %}
