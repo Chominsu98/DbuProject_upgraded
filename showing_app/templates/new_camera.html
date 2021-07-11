@@ -1,0 +1,287 @@
+{% load static %}<!--이 코드는 아이폰에 적용되는 순수(살짝 개조한)버젼의 jsQr코드이다.-->
+<html><head>
+    <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+
+
+      <meta charset="utf-8">
+      <title>jsQR Demo 1</title>
+      <!-- <script src="jsQR%20Demo_pliki/jsQR.min.js"></script> -->
+    <style>
+    body {color: #333; max-width: 800px; margin: 0 auto; position: relative;}
+    #githubLink {position: absolute; right: 0; top: 10px; color: #2D99FF;}
+    h1 {margin: 10px 0; font-size: 30px;}
+    #loadingMessage {text-align: center; padding: 40px; background-color: #eee;}
+    .centr {width: 60%;  margin: 0 auto;}
+    #canvas {width: 100%;}
+    #output {margin-top: 20px; background: #eee; padding: 10px; padding-bottom: 0;}
+    #output div {padding-bottom: 10px; word-wrap: break-word;}
+    #noQRFound {text-align: center;}
+    .highlight {border: 5px solid red;}
+    #stopBtn {float: right; color: #2D99FF; margin: 5px 5px 0 0;}
+    canvas#buffer {
+       display: none; /* for per-frame data copying */
+    }
+
+    canvas#overlay {
+      position:absolute;
+      width: 100%;
+      height: 100%;
+    }
+
+    video#video0 {
+      
+      position:absolute;
+      width: 100%;
+      height: 100%;
+    }
+    </style>
+    <!-- <link href="jsQR%20Demo_pliki/css.css" rel="stylesheet"> -->
+    <script
+      src="https://code.jquery.com/jquery-3.6.0.slim.min.js"
+      integrity="sha256-u7e5khyithlIdTpu22PHhENmPcRdFiHRjhAuHcs05RI="
+      crossorigin="anonymous"></script>
+    <script src="{% static 'new_camera/jsQR.js'%}"></script>
+  
+  </head>
+    <body tcap-name="mainman"><span id="warning-container"><i data-reactroot=""></i></span>
+    
+      <h1>jsQR Demo 1</h1>
+      <a id="githubLink" href="https://github.com/cozmo/jsQR">Source on Github ⇒ cozmo/jsQR</a>
+      <input type="button" value="STOP" id="stopBtn">
+      <p>Pure JavaScript decoding library of <a href="http://www.denso-wave.com/qrcode/faqpatent-e.html">QR code (® Denso Wave Incorporated)</a>.</p>
+ 
+      <div id="loadingMessage" hidden="">⌛ Loading video...</div>
+      <div class="centr">
+        <canvas id="canvas" height="480" width="640"></canvas> 
+        <video id="video0" playsinline autoplay style="position:absolute;opacity:0;top:0;z-index:-1000"></video>
+      </div>
+      
+      <div class="controls">
+        <button id="Get-button" style="position: absolute;">Get camera</button>
+        <select id="select" style="position: absolute;left:100px;" value="">
+          <option value="">
+            =카메라 선택=
+          </option>
+        </select>
+      </div>
+      <div id="output" style="position: absolute;">
+        <div id="outputMessage">No QR code detected.</div>
+        <div hidden="">
+          <div id="outputHistData"></div>
+          <div id="outputData" class=""></div>
+        </div>
+      </div>
+      
+    <script>
+    //var video = document.createElement("video");
+    var video=document.getElementById("video0");
+    var canvasElement = document.getElementById("canvas");
+    var canvas = canvasElement.getContext("2d");
+    var loadingMessage = document.getElementById("loadingMessage");
+    var outputContainer = document.getElementById("output");
+    var outputMessage = document.getElementById("outputMessage");
+    var outputHistData = document.getElementById("outputHistData");
+    var outputData = document.getElementById("outputData");
+    var tmpActData = "";
+    var tmpLastData = "";
+    var stopBtn = document.getElementById("stopBtn");
+    //새롭게 넣은 변수들
+    const button = document.getElementById('Get-button');
+    const select = document.getElementById('select');
+    let currentStream;
+    let previous_camera;//전에 있던 카메라 이름 저장
+    //
+
+    
+    // function drawPath(offset, points, color, lineWidth) {//offset={x: ,y: }, points=[p1={x: ,y: }, p2, ...]
+    //   canvas.beginPath();
+    //   canvas.lineWidth = lineWidth;
+    //   canvas.strokeStyle = color;
+    //   canvas.moveTo(points[0].x + offset.x, points[0].y + offset.y);
+    //   for (var i=1; i<points.length; i++)
+    //     canvas.lineTo(points[i].x + offset.x, points[i].y + offset.y);
+    //   canvas.stroke();
+    // }
+    function drawRect(topLeft, size, color, lineWidth) {//({x: ,y: },{dx: ,dy: },
+      canvas.beginPath();
+      canvas.lineWidth = lineWidth;
+      canvas.strokeStyle = color;
+      canvas.rect(topLeft.x-lineWidth/2, topLeft.y-lineWidth/2
+        , size.dx+lineWidth, size.dy+lineWidth); //ramka na zewnątrz
+      canvas.stroke();
+    }
+    
+    //새롭게 넣은 함수-카메라장치가져오기
+    function gotDevices(mediaDevices) {
+      select.innerHTML = ''; //매번 빈칸으로 계속 초기화 해주던것이었다,,,,그러니 매번 장치추가해줘도 새로고침 느낌이었다,,
+      //select.appendChild(document.createElement('option'));
+      let count = 1;
+      
+      mediaDevices.forEach(mediaDevice => {
+      if (mediaDevice.kind === 'videoinput') {
+  
+        //  테스트용 후보추가
+        //  const test_case=document.createElement('option');
+        // test_case.value="";
+        // const text_test=document.createTextNode("샘플용");
+        // test_case.appendChild(text_test);
+        // select.appendChild(test_case);
+
+
+        const option = document.createElement('option');
+        option.value = mediaDevice.deviceId;
+        const label = mediaDevice.label || `Camera ${count++}`;
+        const textNode = document.createTextNode(label);
+        option.appendChild(textNode);
+        select.appendChild(option);
+        console.log("나 여기임");
+
+       
+        if(typeof previous_camera!== "undefined"){
+          console.log("이전카메라는 정의됨")
+      
+          var aTags=document.getElementsByTagName("option");
+          for(var i=0;i<aTags.length;i++){
+            // if(previous_camera=="back" && aTags[i].textContent.includes("back"||"후면")){
+            //   aTags[i].selected=true;
+            //   break;
+            // }
+            if(aTags[i].textContent==previous_camera){
+              aTags[i].selected=true;
+              console.log("여기서 걸려부러따");
+              break;
+            }
+          }
+        } //즉 한 번 카메라를 쓴적이 있어 카메라가 선택되었다는 것
+        
+        
+          }
+      });
+    }
+
+    function stopMediaTracks(stream) {
+      stream.getTracks().forEach(track => {
+      track.stop();
+        });
+    }
+
+    button.addEventListener('click', event => {
+      if (typeof currentStream !== 'undefined') {
+        console.log("나 여기땅!");
+        stopMediaTracks(currentStream);
+        //stopStreamedVideo();
+      }
+      const videoConstraints = {};
+      if (select.value === '') {
+        videoConstraints.facingMode = 'environment';
+        previous_camera="back";
+      } else {
+        videoConstraints.deviceId = { exact: select.value };
+        previous_camera=$("#select option:selected").text();//다음 콤보박스에 선택된 것을 알려주기 위해 정보를 저장해둔다
+        console.log(previous_camera);
+      }
+      const constraints = {
+        video: videoConstraints,
+        audio: false
+      };
+      navigator.mediaDevices
+        .getUserMedia(constraints)
+        .then(stream => {
+          var animFrameId;
+          currentStream = stream;
+          video.srcObject = stream;
+          //video.setAttribute("playsinline", true);
+          video.play();
+          animFrameId = requestAnimationFrame(tick);
+          return navigator.mediaDevices.enumerateDevices();
+        })
+        .then(gotDevices)//여기서 인자 gotDevices를 제거함 굳이 또 같은 장치를 또 추가해줄 필요 없자나
+        .catch(error => {
+          console.error(error);
+        });
+    });
+
+    navigator.mediaDevices.enumerateDevices().then(gotDevices);
+    //
+    // var animFrameId;                
+    // // Use facingMode: environment to attemt to get the front camera on phones
+    // navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } }).then(function(stream) {
+    //   video.srcObject = stream;
+    //   video.setAttribute("playsinline", true); // required to tell iOS safari we don't want fullscreen
+    //   video.play();
+    //   animFrameId = requestAnimationFrame(tick);
+    // });
+    
+
+    
+    function stopStreamedVideo() {
+      var stream = video.srcObject;
+      var tracks = stream.getTracks();
+      video.pause();
+      tracks.forEach(function(track) { track.stop(); });
+      video.srcObject = null;
+      //canvas.clearRect(0, 0, canvasElement.width, canvasElement.height);
+      stopBtn.hidden = true;
+      outputMessage.hidden = false;
+      outputMessage.innerHTML = 'Restart: <b>F5</b> or <b>Ctrl+R</b>';
+      cancelAnimationFrame(animFrameId);
+    }
+    
+    function tick() {
+      loadingMessage.innerText = "⌛ Loading video..."
+      if (video.readyState === video.HAVE_ENOUGH_DATA) {
+
+        loadingMessage.hidden = true;
+        //canvasElement.hidden = false;
+        outputContainer.hidden = false;
+        stopBtn.hidden = false;
+        stopBtn.addEventListener("click", stopStreamedVideo);
+
+
+    
+        canvasElement.height = video.videoHeight;
+        canvasElement.width = video.videoWidth;
+        canvas.drawImage(video, 0, 0, canvasElement.width, canvasElement.height);
+            //smaller rect for QRcode reading
+        var w=Math.min(canvasElement.width, canvasElement.height)/1.6
+          , x=(canvasElement.width - w)/2, y=(canvasElement.height - w)/2;
+        drawRect({x:x, y:y}, {dx:w, dy:w}, 'rgba(0, 255, 0, 0.4)', 4);  //Lime, alpha=0.4
+        //var imageData = canvas.getImageData(0, 0, canvasElement.width, canvasElement.height);
+        var imageData = canvas.getImageData(x, y, w, w);
+
+        
+        var code = jsQR(imageData.data, imageData.width, imageData.height, {
+          inversionAttempts: "dontInvert",
+        });
+        if (code) {
+          var loc = code.location;
+          drawPath({x:x, y:y}, [loc.topLeftCorner, loc.topRightCorner, loc.bottomRightCorner
+            , loc.bottomLeftCorner, loc.topLeftCorner], "#FF3B58", 4);
+          outputMessage.hidden = true;
+          outputHistData.parentElement.hidden = false;
+          tmpActData = code.data.replace(/\r?\n/g, '<br>');
+          if (tmpLastData == tmpActData) {
+            outputData.className = 'highlight';
+          } else {
+            console.log("에베벱베");
+            outputData.className = '';
+            outputHistData.innerHTML += tmpLastData +'<br><hr>';
+            outputData.innerHTML = tmpActData
+            tmpLastData = tmpActData;
+          }
+        } else {
+          //console.log("후후후후");
+          outputData.className = '';
+          //outputMessage.hidden = false;
+          //outputData.parentElement.hidden = true;
+        }
+      }
+      requestAnimationFrame(tick);
+    }
+  
+
+    </script>
+    
+
+    
+    </body></html> 

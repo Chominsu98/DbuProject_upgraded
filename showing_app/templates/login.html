@@ -3,7 +3,37 @@
 
 
 {% block contents %}
+<style>
+     #popup {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, .7);
+        z-index: 1;
+      }
 
+      #popup.hide {
+        display: none;
+      }
+
+      #popup.has-filter {
+        backdrop-filter: blur(4px);
+        -webkit-backdrop-filter: blur(4px);
+      }
+
+      #popup .content {
+        padding: 20px;
+        background: #fff;
+        border-radius: 5px;
+        box-shadow: 1px 1px 3px rgba(0, 0, 0, .3);
+      }
+
+</style>
 <body class="is-preload">
     <div id='wrapper'>
         <!-- Header -->
@@ -15,15 +45,16 @@
 							<div class="inner">
 								<h1>리더들은 코드를 입력해주세요</h1>
 								<p>멤버들의 출석체크를 위한 프로그램입니다.</p>
-                                <form method="post" action="">
+                                <form id="login_form" >
                                     <div class="fields">
                                         <div class="field">
                                             <label for="message">👀PASSCODE👀</label>
-                                            <input type="text" name="passcode" />
+                                            <input id="pass" type="text" name="passcode" placeholder="패스코드입력해주세요" />
                                         </div>
+                                    
                                     </div>
                                     <ul class="actions">
-                                        <li><input id="send" type="submit" value="Send it" class="primary" /></li>
+                                        <li><input id="send" type="button" value="Send it" class="primary" /></li>
                                         <li><input type="reset" value="Reset" /></li>
                                     </ul>
                                 </form>
@@ -38,15 +69,89 @@
 						
 					</header>
 
-        </div>
+                     <!--modal popup page-->
+                    <div id="popup" class="hide">
+                        <div class="content">
+                        <p id="notify" style="color:black">
+                            여기에 팝업창 내용이 나타납니다.
+                        </p>
+                        
+                        <button style="background-color:#ff4545b0 ;border:solid 3px; border-color:#000000fc; color:black;font-size: 0.7em;" onclick="closePopup()">닫기</button>
+                        </div>
+                    </div>
 
-    </div>
-    <footer>
-        <p class="copyright">&copy; Developed by ChoMinsu.</p>
-    </footer>
+                    <!-- Footer -->
+					<footer id="footer">
+						<p class="copyright">&copy; Developed by ChoMinsu.</p>
+					</footer>
+
+        </div>
+        
+
+
     <div id="bg"></div>
 
+    <script>
+
+        $(function(){
+            $('#send').on("click",function () {
     
+                var login = $("#login_form").serialize();
+
+                //alert(login);
+    
+                //console.log(login);
+                $.ajax({
+                    type: "POST",
+                    url: "{% url 'login' %}",
+                    data: JSON.stringify(login),
+                    dataType: 'json',
+                    success: function (data) {
+                        //alert("success");
+                        console.log(data.result);
+                        if(data.result==true){
+                            showPopup(true);
+                            $("#notify").text("😎환영합니다 리더님!");
+                            state=true;
+                        }
+                        else{
+                            console.log("정보가 틀린데..");
+                            showPopup(true);
+                            $("#notify").text("🙄패스코드가 틀립니다...다시입력해주세요.");
+                            state=false;
+                        }
+                    },
+                    error: function (request, status, error) {
+                        console.log("code:"+request.status+"\n"+"message:"+request.responseText+"\n"+"error:"+error);
+    
+                    }
+                });
+            });
+        });
+        
+        function showPopup(hasFilter) {
+            const popup = document.querySelector('#popup');
+            
+            if (hasFilter) {
+            popup.classList.add('has-filter');
+            } else {
+            popup.classList.remove('has-filter');
+            }
+            
+            popup.classList.remove('hide');
+        }
+
+        function closePopup() {
+            const popup = document.querySelector('#popup');
+            popup.classList.add('hide');
+            if (state==true){
+                window.location.href="home/";
+            }
+            else{
+                window.location.href="{% url 'login_render' %}";
+            }
+        }
+    </script>
 
 
 

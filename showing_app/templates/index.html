@@ -27,7 +27,7 @@
 						<nav>
 							<ul>
 								<li><a href="#intro">출석체크!</a></li>
-								<!-- <li><a href="#contact">컨텍트창</a></li> -->
+								<li><a href="#contact" onclick="change_location('logout')">Logout</a></li>
 					
 								<!--<li><a href="#elements">Elements</a></li>-->
 							</ul>
@@ -79,7 +79,7 @@
 
 				<!-- Footer -->
 					<footer id="footer">
-						<p class="copyright">&copy; Developed by ChoMinsu.</p>
+						<p class="copyright">&copy; Developed by ChoMinsu.</p>	
 					</footer>
 
 			</div>
@@ -87,6 +87,22 @@
 		<!-- BG -->
 			<div id="bg"></div>
 
+			<script>
+				function change_location(name){
+					var url;
+					if(name=="qrcode"){
+						 url="{% url 'camera_exam' %}";
+					}
+					else if(name=="logout"){
+						url="{%url 'logout' %}";
+					}
+					else{
+						url="{% url 'home' %}"
+					}
+					
+					window.location.href=url;
+				}
+			</script>	
 		
 	</body>
 	{% endblock %}

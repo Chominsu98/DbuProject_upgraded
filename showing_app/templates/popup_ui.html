@@ -9,8 +9,23 @@
 <h2>사용방법</h2>
 <p>카메라 권한 팝업창이 뜨면 승인해준 뒤 Qr코드를 인식시켜주시면 자동으로 출석체크가 됩니다 </p>
 <ul class="actions">
-    <li><input type="button" value="Turn it on!"  onclick="location.href='qrcode/'"/></li>
-    <li><input type="button" value="home" onclick="location.href=''"/></li>
+    <li><input name="qrcode" type="button" value="Turn it on!"  onclick="change_location(this.name)"/></li>
+    <li><input name="home" type="button" value="home" onclick="change_location(this.name)"/></li>
 </ul>
 
-
+<!-- <script>
+    function change_location(name){
+        var url;
+        if(name=="qrcode"){
+             url="{% url 'camera_exam' %}";
+        }
+        else if(name=="logout"){
+            url="{%url 'logout' %}";
+        }
+        else{
+            url="{% url 'home' %}"
+        }
+        
+        window.location.href=url;
+    }
+</script> -->

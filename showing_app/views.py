@@ -12,13 +12,13 @@ import string
 from datetime import datetime
 
 #로그인페이지 구현을 위한 import
-from django.contrib.auth import login as auth_login
-from django.contrib.auth.forms import AuthenticationForm
+from django.core.exceptions import PermissionDenied
+from django.urls import reverse
 
 
 #내가 사용할려는 구글 스프레드시트의 url
 default_url = 'https://docs.google.com/spreadsheets/d/116tUqWRAQBbTYeQrQQJ9Bl7I7BJxp3Dq_KyeQYZAnt8/edit#gid=0'
-
+state=1
 #스프레드시트 연관 클래스 생성
 class GoogleSpreadSheet:
 
@@ -63,34 +63,47 @@ class GoogleSpreadSheet:
 
 #메인 홈페이지 UI 랜더링 함수
 def home_UI(request):
-    global spreadsheet
-    spreadsheet=GoogleSpreadSheet(default_url)
+    if request.session["login_page"]!=True:
+        raise PermissionDenied
+    global state
+    if state==1:
+        global spreadsheet
+        spreadsheet=GoogleSpreadSheet(default_url)
+        state+=1
 
-    worksheet=spreadsheet.google_spread_connection()
-    row_data=worksheet.row_values(1)
-    print(row_data)
-    #print(os.getcwd()+'\showing_app\dbu_json\dbuchecker-edaf08093d83.json')
+        worksheet=spreadsheet.google_spread_connection()
+        row_data=worksheet.row_values(1)
+        print(row_data)
+        #print(os.getcwd()+'\showing_app\dbu_json\dbuchecker-edaf08093d83.json')
     return render(request,"index.html")
 
 #단순 카메라 인식페이지 랜더링 함수
 def camera_exam(request):
-     return render(request,"camera_exam.html")    
+    if request.session["login_page"]!=True:
+        raise PermissionDenied
+    return render(request,"camera_exam.html")    
 
-#로그인 인식페이지-미완성 (개발중)
+#로그인 페이지
+def login_render(request):
+    request.session['login_page']=False
+    return render(request,"login.html")
+
 def login(request):
     secret_code="dbc1110"
     if request.method=="POST":
-        input_code=request.POST["passcode"]
-        if input_code==secret_code:
+        print("들어와따")
+        scan_code=json.loads(request.body)
+        print(scan_code)
+        scan_code.split('=')[1]
+        if scan_code.split('=')[1]==secret_code:
             context={"result":True}
+            request.session['login_page']=True
         else:
             context={"result":False}
-        return JsonResponse(context)   
-    else:
-        return render(request,"login.html")
-
+        return JsonResponse(context)
 def logout(request):#미완성-개발중
-    return redirect("")
+    del request.session['login_page']
+    return redirect(reverse('login_render'))
 
 #카메라인식페이지에서 데이터 가공과 함께 json보내주는 함수
 def camera_data_pop(request):
@@ -139,3 +152,6 @@ def camera_data_pop(request):
     context={'result':tmp}
     return JsonResponse(context)
 
+#테스트용 함수
+def select(request):
+    return render(request,"new_camera.html")
