@@ -1,0 +1,208 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block contents%}
+<style>
+    #popup {
+       display: flex;
+       justify-content: center;
+       align-items: center;
+       position: fixed;
+       top: 0;
+       left: 0;
+       width: 100%;
+       height: 100%;
+       background: rgba(0, 0, 0, .7);
+       z-index: 1000;
+     }
+
+     #popup.hide {
+       display: none;
+     }
+
+     #popup.has-filter {
+       backdrop-filter: blur(4px);
+       -webkit-backdrop-filter: blur(4px);
+     }
+
+     #popup .content {
+       padding: 20px;
+       background: #fff;
+       border-radius: 5px;
+       box-shadow: 1px 1px 3px rgba(0, 0, 0, .3);
+     }
+
+</style>
+<body class="is-preload">
+    <div id='wrapper'>
+        <!-- Header -->
+                    <header id="header">
+                        <div class="">
+                            <img style="width:20%;" src="{% static 'images/DBU.png' %}" alt="" />
+                        </div>
+                        <div class="content">
+                            <div class="inner">
+                                <h1>🔑관리자페이지🔑</h1>
+                                <p>패스코드의 수정 및 금일 출석현황을 확인할 수 있습니다.</p>
+                            </div>
+                        </div>
+                        <nav>
+                            <ul>
+                                <li><a href="#" onclick="change_location('popup_page')">관리자페이지</a></li>
+                                <li><a href="#" onclick="change_location('logout')">Logout</a></li>
+                               
+                                <!--<li><a href="#elements">Elements</a></li>-->
+                            </ul>
+                        </nav>
+                    </header>
+
+
+                     <!--modal popup page-->
+                    <div id="popup" class="hide">
+                        <div class="content">
+                        <p id="notify" style="color:black">
+                            여기에 팝업창 내용이 나타납니다.
+                        </p>
+                        
+                        <button style="background-color:#ff4545b0 ;border:solid 3px; border-color:#000000fc; color:black;font-size: 0.7em;" onclick="closePopup()">닫기</button>
+                        </div>
+                    </div>
+
+                    <!--계정변경페이지를 열기위한 안보이는 버튼-->
+                    <div>
+                        <a href="#passcode_article" id="hidden_popup_button_passcode" style="display: none;">팝업</a>
+                        <a href="#popup_article" id="hidden_popup_button_popup" style="display: none;">팝업</a>
+                    </div>
+
+                    <!--계정 변경 페이지-->
+                    <div id='main'>
+                        <article id="popup_article">
+							{% include 'popup_ui.html' %}
+						</article>
+
+                        <article id="passcode_article">
+                            <h2 class="major">CHANGE PASSCODE🔑</h2>
+                            <form id="change_form">
+                                <div class="fields">
+                                    <div class="field">
+                                        <label for="name">새로운 PASSCODE👀</label>
+                                        <input type="text" name="new_passcode" id="new_passcode" />
+                                    </div>
+                                    
+                                </div>
+                                <ul class="actions">
+                                    <li><input id="change_send" type="button" value="변경하기" class="primary send_button" /></li>
+                                    <li><input type="reset" value="Reset" /></li>
+                                </ul>
+                            </form>
+                        </article>
+                        <article id="attendance">
+                            <h2 class="major" id="attendance_date">🙋‍♂️출석 현황</h2>
+                            <table class="table">
+                                <thead>
+                                    <th>Member</th>
+                                    <th id='date'>Date</th>
+                                </thead>
+                                <tbody id='attendance_body'></tbody>
+                            </table>
+                        </article>
+                    </div>
+
+                    <!-- Footer -->
+					<footer id="footer">
+						<p class="copyright">&copy; Developed by ChoMinsu.</p>
+					</footer>
+
+        </div>
+        
+
+
+    <div id="bg"></div>
+    <script>
+        
+        state="";
+      
+                  
+        window.onload=function(){
+  
+        autoclick_popup("popup");
+
+
+        }
+        
+
+        function autoclick_popup(name){
+            if(name=="passcode"){
+                console.log("분명 여기들어왔는딩,,");
+                document.getElementById("hidden_popup_button_passcode").click();
+            }
+            else if(name=="popup"){
+                document.getElementById("hidden_popup_button_popup").click();
+            }
+            
+        }
+
+        $(function(){
+                    $('.send_button').on("click",function () {
+                        var form_name_id;
+
+                      
+                        form_name_id="#change_form";
+                        
+          
+                        var login = $(form_name_id).serialize();
+
+                        //alert(login);
+            
+                        //console.log(login);
+                        $.ajax({
+                            type: "POST",
+                            url: "{% url 'admin_controller' %}",
+                            data: JSON.stringify(login),
+                            dataType: 'json',
+                            success: function (data) {
+                                // alert("success");
+                                console.log(data.result);
+                                
+                                showPopup(true);
+                                $('#notify').text("✔패스코드 변경에 성공하셨습니다.");
+                                console.log(data.result)
+                                return;
+                                    
+                                
+                                
+                                
+                                
+                            },
+                            error: function (request, status, error) {
+                                console.log("code:"+request.status+"\n"+"message:"+request.responseText+"\n"+"error:"+error);
+            
+                            }
+                        });
+                    });
+                });
+                
+         function showPopup(hasFilter) {
+            const popup = document.querySelector('#popup');
+            
+            if (hasFilter) {
+            popup.classList.add('has-filter');
+            } else {
+            popup.classList.remove('has-filter');
+            }
+            
+            popup.classList.remove('hide');
+        }
+
+        function closePopup() {
+            const popup = document.querySelector('#popup');
+            popup.classList.add('hide');
+            
+            console.log("여기 통과해야하는데...");
+            window.location.href="{% url 'admin_after_login' %}"
+            
+            
+        }
+    </script>
+</body>
+{% endblock %}

@@ -20,7 +20,7 @@
 
     <script src="http://code.jquery.com/jquery-3.5.1.min.js"></script>
     <!--인식률 개선 새로운 카메라에 대한 자바스크립트 파일-->
-    <!--밑에있는 mifiedversion으로 할시 아이폰 프리즈 안걸림-->
+    <!--코드 자체 내에 밑에있는 minifiedversion으로 할시 아이폰 프리즈 안걸림-->
     <!-- <script src="{% static 'new_camera/jsQR.js'%}"></script> -->
 
     <link href='https://fonts.googleapis.com/css?family=Lato:300' rel='stylesheet' type='text/css'>
@@ -169,6 +169,50 @@
 				<!-- Main -->
 					<section id="main" class="wrapper">
 						<div class="inner">
+              <div id="app" style="height:auto; background-color: black;">
+                <section class="cameras">
+                  <h2>Camera</h2>
+                  <ul>
+                    
+                      <!-- <li v-if="cameras.length === 0" class="empty">No cameras found</li>
+                      <li v-for="camera in cameras">
+                        <span id="camera_name" v-if="camera.id == activeCameraId" :title="formatName(camera.name)" class="active">{% templatetag openvariable %} formatName(camera.name) {% templatetag  closevariable %} </span>
+                        <span v-if="camera.id != activeCameraId" :title="formatName(camera.name)">
+                          <a @click.stop="selectCamera(camera)">{% templatetag openvariable %} formatName(camera.name) {% templatetag closevariable %} </a>
+                        </span>
+                      </li> -->
+                      <div class="controls">
+                        <button id="Get-button">Get camera</button>
+                        <input type="button" value="STOP" id="stopBtn">
+                        <select id="select" value="">
+                          <option value="">
+                            =카메라 선택=
+                          </option>
+                        </select>
+                      </div>
+                
+                  </ul>
+                </section>
+                <section class="scans">
+                  <h2>인식정보</h2>
+                  <!-- <ul v-if="scans.length === 0">
+                    <li class="empty">No scans yet</li>
+                  </ul>
+                  <transition-group name="scans" tag="ul" id="scan_info">
+                    <li class="scan-man" v-for="scan in scans" :key="scan.date" :title="scan.content">{% templatetag openvariable %} scan.content {% templatetag closevariable %}</li>
+                  </transition-group> -->
+                  <div id="output">
+                    <div id="outputMessage"style="color:black;">👀인식된 정보가 아직...👀</div>
+                    <ul id="scan_info">
+                      <!-- <div hidden="">
+                        <div id="outputHistData"></div>
+                        <div id="outputData" class=""></div>
+                      </div> -->
+                    </ul>
+                    
+                  </div>
+                </section>
+            </div>
 							<h1 class="major">출석체크중</h1>
               <div id="loadingMessage" hidden="">⌛ Loading video...</div>
               
@@ -179,50 +223,7 @@
                   <canvas id="canvas" height="480" width="640"></canvas>
                 </div>
               </span>
-              <div id="app" style="height:auto; background-color: black;">
-                    <section class="cameras">
-                      <h2>Camera</h2>
-                      <ul>
-                        
-                          <!-- <li v-if="cameras.length === 0" class="empty">No cameras found</li>
-                          <li v-for="camera in cameras">
-                            <span id="camera_name" v-if="camera.id == activeCameraId" :title="formatName(camera.name)" class="active">{% templatetag openvariable %} formatName(camera.name) {% templatetag  closevariable %} </span>
-                            <span v-if="camera.id != activeCameraId" :title="formatName(camera.name)">
-                              <a @click.stop="selectCamera(camera)">{% templatetag openvariable %} formatName(camera.name) {% templatetag closevariable %} </a>
-                            </span>
-                          </li> -->
-                          <div class="controls">
-                            <button id="Get-button">Get camera</button>
-                            <input type="button" value="STOP" id="stopBtn">
-                            <select id="select" value="">
-                              <option value="">
-                                =카메라 선택=
-                              </option>
-                            </select>
-                          </div>
-                    
-                      </ul>
-                    </section>
-                    <section class="scans">
-                      <h2>인식정보</h2>
-                      <!-- <ul v-if="scans.length === 0">
-                        <li class="empty">No scans yet</li>
-                      </ul>
-                      <transition-group name="scans" tag="ul" id="scan_info">
-                        <li class="scan-man" v-for="scan in scans" :key="scan.date" :title="scan.content">{% templatetag openvariable %} scan.content {% templatetag closevariable %}</li>
-                      </transition-group> -->
-                      <div id="output">
-                        <div id="outputMessage"style="color:black;">👀인식된 정보가 아직...👀</div>
-                        <ul id="scan_info">
-                          <!-- <div hidden="">
-                            <div id="outputHistData"></div>
-                            <div id="outputData" class=""></div>
-                          </div> -->
-                        </ul>
-                        
-                      </div>
-                    </section>
-                </div>
+
                     
             </div>
 

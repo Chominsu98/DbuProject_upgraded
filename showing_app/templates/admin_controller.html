@@ -1,0 +1,215 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block contents%}
+<style>
+    #popup {
+       display: flex;
+       justify-content: center;
+       align-items: center;
+       position: fixed;
+       top: 0;
+       left: 0;
+       width: 100%;
+       height: 100%;
+       background: rgba(0, 0, 0, .7);
+       z-index: 1000;
+     }
+
+     #popup.hide {
+       display: none;
+     }
+
+     #popup.has-filter {
+       backdrop-filter: blur(4px);
+       -webkit-backdrop-filter: blur(4px);
+     }
+
+     #popup .content {
+       padding: 20px;
+       background: #fff;
+       border-radius: 5px;
+       box-shadow: 1px 1px 3px rgba(0, 0, 0, .3);
+     }
+
+</style>
+<body class="is-preload">
+    <div id='wrapper'>
+        <!-- Header -->
+					<header id="header">
+						<div class="">
+							<img style="width:20%;" src="{% static 'images/DBU.png' %}" alt="" />
+						</div>
+						<div class="content">
+							<div class="inner">
+								<h1>🔒관리자계정페이지 입니다.🔒</h1>
+								<p>PASSCODE변경 및 확인을 위한 ADMIN 계정을 입력해주세요</p>
+                                <form id="login_form" >
+                                    <div class="fields">
+                                        <div class="field">
+                                            <label for="message">🔑ADMIN PASSCODE🔑</label>
+                                            <input id="pass" type="text" name="ID" placeholder="ID를입력해주세요" />
+                                        </div>
+
+                                        <div class="field">
+                                            <input id="pass" type="text" name="passcode" placeholder="패스코드입력해주세요" />
+                                        </div>
+                                    
+                                    </div>
+                                    <ul class="actions">
+                                        <li><input id="send" type="button" value="Send it" class="primary send_button" /></li>
+                                        <li><input type="reset" value="Reset" /></li>
+                                    </ul>
+                                </form>
+							</div>
+                            
+						</div>
+						
+							<ul class="icons">
+                                <li><a href="https://www.instagram.com/done_by_us/" class="icon brands fa-instagram"><span class="label">Instagram</span></a></li>
+                                <li><a href="https://github.com/Chominsu98/DbuProject_upgraded" class="icon brands fa-github"><span class="label">GitHub</span></a></li>
+                            </ul>
+						
+					</header>
+
+                     <!--modal popup page-->
+                    <div id="popup" class="hide">
+                        <div class="content">
+                        <p id="notify" style="color:black">
+                            여기에 팝업창 내용이 나타납니다.
+                        </p>
+                        
+                        <button style="background-color:#ff4545b0 ;border:solid 3px; border-color:#000000fc; color:black;font-size: 0.7em;" onclick="closePopup()">닫기</button>
+                        </div>
+                    </div>
+
+                    <!--계정변경페이지를 열기위한 안보이는 버튼-->
+                    <div>
+                        <a href="#passcode_article" id="hidden_popup_button_passcode" style="display: none;">팝업</a>
+                        <a href="#popup_article" id="hidden_popup_button_popup" style="display: none;">팝업</a>
+                    </div>
+
+                    <!--계정 변경 페이지-->
+                    <div id='main'>
+                        <article id="popup_article">
+							{% include 'popup_ui.html' %}
+						</article>
+
+                        <article id="passcode_article">
+                            <h2 class="major">CHANGE PASSCODE🔑</h2>
+                            <form id="change_form">
+                                <div class="fields">
+                                    <div class="field">
+                                        <label for="name">새로운 PASSCODE👀</label>
+                                        <input type="text" name="new_passcode" id="new_passcode" />
+                                    </div>
+                                    
+                                </div>
+                                <ul class="actions">
+                                    <li><input id="change_send" type="button" value="변경하기" class="primary send_button" /></li>
+                                    <li><input type="reset" value="Reset" /></li>
+                                </ul>
+                            </form>
+                        </article>
+                    </div>
+
+                    <!-- Footer -->
+					<footer id="footer">
+						<p class="copyright">&copy; Developed by ChoMinsu.</p>
+					</footer>
+
+        </div>
+        
+
+
+    <div id="bg"></div>
+    <script>
+        state="";
+        
+                            
+        
+
+        function autoclick_popup(name){
+            if(name=="passcode"){
+                console.log("분명 여기들어왔는딩,,");
+                document.getElementById("hidden_popup_button_passcode").click();
+            }
+            else if(name=="popup"){
+                document.getElementById("hidden_popup_button_popup").click();
+            }
+            
+        }
+
+        $(function(){
+                    $('.send_button').on("click",function () {
+                        var form_name_id;
+
+                        
+                        
+                        form_name_id="#login_form";
+                        
+            
+                        var login = $(form_name_id).serialize();
+
+                        //alert(login);
+            
+                        //console.log(login);
+                        $.ajax({
+                            type: "POST",
+                            url: "{% url 'admin_controller' %}",
+                            data: JSON.stringify(login),
+                            dataType: 'json',
+                            success: function (data) {
+                                // alert("success");
+                                console.log(data.result);
+                                
+                                if(data.result==true){
+                                    showPopup(true);
+                                    $("#notify").text("😎환영합니다 관리자님!");
+                                    state=true;
+                                }
+                                else{
+                                    console.log("정보가 틀린데..");
+                                    showPopup(true);
+                                    $("#notify").text("🙄패스코드가 틀립니다...다시입력해주세요.");
+                                    state=false;
+                                }
+                                
+                                
+                            },
+                            error: function (request, status, error) {
+                                console.log("code:"+request.status+"\n"+"message:"+request.responseText+"\n"+"error:"+error);
+            
+                            }
+                        });
+                    });
+                });
+                
+         function showPopup(hasFilter) {
+            const popup = document.querySelector('#popup');
+            
+            if (hasFilter) {
+            popup.classList.add('has-filter');
+            } else {
+            popup.classList.remove('has-filter');
+            }
+            
+            popup.classList.remove('hide');
+        }
+
+        function closePopup() {
+            const popup = document.querySelector('#popup');
+            popup.classList.add('hide');
+            
+            if (state==true){
+                // autoclick_popup("popup");
+                window.location.href="{% url 'admin_after_login' %}"
+                state="";
+            }
+            else{
+                window.location.href="{% url 'admin_controller' %}";
+            }
+        }
+    </script>
+</body>
+{% endblock %}

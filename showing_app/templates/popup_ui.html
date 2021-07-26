@@ -4,28 +4,94 @@
 
 <!-- Intro -->
 
-<h2 class="major">CHECK ATTENDANCE  </h2>
+<h2 class="major">Admin Menu  </h2>
 <span class="image main"><img src="{% static 'images/DBU.png' %}" alt="" /></span>
-<h2>사용방법</h2>
-<p>카메라 권한 팝업창이 뜨면 승인해준 뒤 Qr코드를 인식시켜주시면 자동으로 출석체크가 됩니다 </p>
+<h2>🔒관리자MENU🔒</h2>
 <ul class="actions">
-    <li><input name="qrcode" type="button" value="Turn it on!"  onclick="change_location(this.name)"/></li>
-    <li><input name="home" type="button" value="home" onclick="change_location(this.name)"/></li>
+    <li><input  type="button" value="패스코드 변경"  onclick="change_location('admin')"/></li>
+    <li><input name="home" type="button" value="출석현황" onclick="change_location('attendance')"/></li>
 </ul>
 
-<!-- <script>
+<script>
+    new_h2_added=false;
+
     function change_location(name){
         var url;
-        if(name=="qrcode"){
-             url="{% url 'camera_exam' %}";
+        var tmp=false;//tmp는 지금 팝업버튼과 로그아웃 버튼이 있는 즉 관리창페이지 메뉴에서 새롭게 다시 들어올때 사전에 써져있을 수 있는 h2태그를 지우기 위한 플래그
+        if(name=="admin"){
+            //  autoclick_popup("passcode");
+            window.location.href="#passcode_article"
+        }
+        else if(name=="attendance"){
+            window.location.href="#attendance"
+            getServerdata();
+        }
+        else if(name=="popup_page"){
+            window.location.href="{% url 'admin_after_login' %}";
+            tmp=true;
         }
         else if(name=="logout"){
-            url="{%url 'logout' %}";
-        }
-        else{
-            url="{% url 'home' %}"
+			window.location.href="{% url 'admin_logout' %}";
+            tmp=true;
+		}
+
+        if (tmp==true){//즉 관리자창 메뉴라는 것
+            if(new_h2_added==true){//근데 만약에 그전에 있던 h2가 있으면 태그를 지워달라 이런 뜻, 없으면 말고?
+                $("#no_attendance").remove();
+            }
         }
         
-        window.location.href=url;
+       
+        
     }
-</script> -->
+ 
+    function getServerdata(){
+
+        $.ajax({
+                            type: "POST",
+                            url: "{% url 'admin_after_login' %}",
+                            data: '{"where":"check_attendance"}',
+                            dataType: 'json',
+                            success: function (data) {
+                                // alert("success");
+                                console.log(data.attendance_list);
+                                var tbody=document.getElementById("attendance_body");
+                                document.getElementById("attendance_date").innerHTML=data.result_date+"🙋‍♂️출석현황";
+                                document.getElementById("date").innerHTML="📆Date"+data.result_date;
+
+                                if(data.result_message!="출석인원이 존재합니다"){
+                                    var new_alert=document.createElement("h2");
+                                    var txt=document.createTextNode(data.result_message);
+                                    new_alert.setAttribute("id","no_attendance");
+                                    new_alert.appendChild(txt);
+                                    var target=document.getElementById("attendance");
+                                    target.appendChild(new_alert);
+                                    new_h2_added=true;
+                                    return;
+                                }
+                                for (var name in data.attendance_list){
+                                    var row=tbody.insertRow(tbody.rows.length);
+                                    var cell1=row.insertCell(0);
+                                    var cell2=row.insertCell(1);
+
+                                    console.log(name);
+                                    cell1.innerHTML=data.attendance_list[name];
+                                    cell2.innerHTML='✔';
+                                }
+                                var row=tbody.insertRow(tbody.rows.length);
+                                var cell1=row.insertCell(0);
+                                var cell2=row.insertCell(1);
+
+                                cell1.innerHTML="출석인원:";
+                                cell2.innerHTML=data.attendance_list.length+"명";
+
+                            },
+                            error: function (request, status, error) {
+                                console.log("code:"+request.status+"\n"+"message:"+request.responseText+"\n"+"error:"+error);
+            
+                            }
+                        });
+    }
+
+    
+</script>	

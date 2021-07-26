@@ -15,8 +15,11 @@ from datetime import datetime
 from django.core.exceptions import PermissionDenied
 from django.urls import reverse
 
-
+#데이터베이스 모델을 쓰기 위한 참조
+from .models import Passcode
 #내가 사용할려는 구글 스프레드시트의 url
+
+#이 url은 체크용 파일로 부터 가져오는 것이다!진짜 파일 url은 따로 있음
 default_url = 'https://docs.google.com/spreadsheets/d/116tUqWRAQBbTYeQrQQJ9Bl7I7BJxp3Dq_KyeQYZAnt8/edit#gid=0'
 state=1
 #스프레드시트 연관 클래스 생성
@@ -65,6 +68,22 @@ class GoogleSpreadSheet:
 def home_UI(request):
     if request.session["login_page"]!=True:
         raise PermissionDenied
+    
+    return render(request,"index.html")
+
+#단순 카메라 인식페이지 랜더링 함수
+def camera_exam(request):
+    try:
+        if request.session["login_page"]!=True:
+            raise PermissionDenied
+    except:    
+        return redirect(reverse('login_render'))
+    else:
+        return render(request,'camera_exam.html')
+
+#로그인 페이지
+def login_render(request):
+    request.session['login_page']=False
     global state
     if state==1:
         global spreadsheet
@@ -75,21 +94,10 @@ def home_UI(request):
         row_data=worksheet.row_values(1)
         print(row_data)
         #print(os.getcwd()+'\showing_app\dbu_json\dbuchecker-edaf08093d83.json')
-    return render(request,"index.html")
-
-#단순 카메라 인식페이지 랜더링 함수
-def camera_exam(request):
-    if request.session["login_page"]!=True:
-        raise PermissionDenied
-    return render(request,"camera_exam.html")    
-
-#로그인 페이지
-def login_render(request):
-    request.session['login_page']=False
     return render(request,"login.html")
 
 def login(request):
-    secret_code="dbc1110"
+    secret_code=Passcode.objects.get(pk=1).passcode
     if request.method=="POST":
         print("들어와따")
         scan_code=json.loads(request.body)
@@ -101,7 +109,7 @@ def login(request):
         else:
             context={"result":False}
         return JsonResponse(context)
-def logout(request):#미완성-개발중
+def logout(request):
     del request.session['login_page']
     return redirect(reverse('login_render'))
 
@@ -155,3 +163,66 @@ def camera_data_pop(request):
 #테스트용 함수
 def select(request):
     return render(request,"new_camera.html")
+
+#관리자계정용 페이지
+def admin_controller(request):
+    admin_id='donebyus'
+    admin_pass='whodidthis'   
+    if request.method=="POST":
+        print("컨트롤들어와따")
+        scan_code=json.loads(request.body)
+        print(scan_code)
+
+        if 'new_passcode' in scan_code:#즉 패스코드 변경 페이지로부터 온 전송데이터일 경우
+            item=Passcode.objects.get(pk=1)
+            print(item.passcode)
+            item.passcode=scan_code.split('=')[1]
+            item.save()
+            context={'result':"success"}
+
+        else:
+            id=scan_code.split("&")[0].split('=')[1]
+            passcode=scan_code.split("&")[1].split('=')[1]
+            if id==admin_id and passcode==admin_pass:
+                context={'result':True}
+                request.session['admin_page']=True
+            else:
+                context={"result":False}
+
+        return JsonResponse(context)
+    else:
+        request.session['admin_page']=False
+        return render(request,"admin_controller.html")    
+
+def admin_after_login(request):
+    if request.session['admin_page']!=True:
+        raise PermissionDenied
+    if request.method=="POST":
+        print("서버로 들어와따")
+        scan_code=json.loads(request.body)
+        print(scan_code['where'])
+        if scan_code["where"]=="check_attendance":#출석현황 페이지에 들어왔다는 얘기
+            worksheet=spreadsheet.get_worksheet()
+            today_date=datetime.today().strftime("%m"+'/'+"%d") #오늘 현재 날짜를 구해놓는다
+
+            try:
+                worksheet.find(today_date,in_row=1,in_column=None)#오늘날짜로 이미 만들어놓은적이 있는지 확인
+            except:
+                print("오늘 날짜로 아직 출석현황 없음")
+                context={'result_date':today_date,"result_message":"🙅‍♂️아직 아무도 출석을 하지 않았습니다."}
+            else:
+                search_col=len(worksheet.row_values(1))
+                name_list=[]
+                attendance_list=worksheet.findall('✔',in_row=None,in_column=search_col)
+                print(attendance_list)
+                for name in attendance_list:
+                    name_list.append(worksheet.cell(name.row,1).value)
+                context={"result_date":today_date,"attendance_list":name_list,"result_message":"출석인원이 존재합니다"}
+
+        
+        return JsonResponse(context)
+    return render(request,"admin_after_login.html")
+
+def admin_logout(request):
+    del request.session['admin_page']
+    return redirect(reverse('login_render'))
