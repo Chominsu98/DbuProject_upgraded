@@ -1,4 +1,8 @@
 # DbuProject_upgraded
+
+개발기blog:https://blog.naver.com/plugnplay98/222438373699
+
+
 던바이어스 출석체크프로그램 카메라성능 및 부가적기능추가 version
 
 기본적으로 Django 기반 웹서비스
