@@ -73,7 +73,7 @@ def home_UI(request):
 
 #단순 카메라 인식페이지 랜더링 함수
 def camera_exam(request):
-    try:
+    try: #여기서 try except로 잡아줘야하는 이유는 모바일같은 창에서는 그냥 카메라만 찍고 다시 담번에 들어올때는 이미 브라우저가 꺼졌어서 세션이 존재하지않는데 비교하게 되므로 에러발생 따라서 리다이렉트 시킴
         if request.session["login_page"]!=True:
             raise PermissionDenied
     except:    
